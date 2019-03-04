@@ -138,7 +138,7 @@ def CheckLog():
      elif operator == 'service':
       operator = ' bittet um eine '
       Services.append([name + ' > ' + content, name + operator + content])
-      ButtonService.config(text='Fragen (' + str(len(Services)) + ')', command=ShowService)
+      ButtonService.config(text='Serviceanfragen (' + str(len(Services)) + ')', command=ShowService)
       threading.Thread(target=BlinkButtonService).start()
      FileLog = open('/var/www/html/interaction/interaction.log', 'a')
      FileLog.write("\n[server]\tdone")
