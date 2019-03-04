@@ -121,7 +121,7 @@
    <option value="Aktivierung des Lichts">Aktivierung des Lichts</option>
    <option value="Deaktivierung des Lichts">Deaktivierung des Lichts</option>
    <option value="Verschiebung der Tafel">Verschiebung der Tafel</option>
-   <option value="Positionsveränderung der Lehrkraft">Positionsver&auml;nderung der Lehrkraft</option>
+   <option value="Positionsveränderung der Lehrkraft">Positionsveränderung der Lehrkraft</option>
  </select><br><br>
  <button onclick="send_service()" id="button_service">Absenden</button><br>
  <font color="red"><span id="output_service"></span></font><br>
