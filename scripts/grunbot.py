@@ -22,7 +22,6 @@ Services = []
 Preview = True
 pins_out = [16,15,33]
 
-GPIO.cleanup()
 GPIO.setmode(GPIO.BOARD)
 
 for pin in pins_out:

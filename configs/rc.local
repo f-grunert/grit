@@ -17,8 +17,8 @@ if [ "$_IP" ]; then
   printf "My IP address is %s\n" "$_IP"
 fi
 
-& python /home/pi/Documents/Scripts/shutdown.py &
 python /home/pi/Documents/Scripts/gpio.py &
+& python /home/pi/Documents/Scripts/shutdown.py &
 python /home/pi/Documents/Scripts/ip.py &
 
 exit 0
