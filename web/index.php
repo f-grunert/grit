@@ -89,6 +89,34 @@
   <?php
 #error_reporting(E_ALL | E_STRICT);
 #ini_set('display_errors', 1);
+
+   $uploaddir = "/home/pi/Documents/Scripts/";
+   
+   if (isset($_FILES["uploadfile"])) {
+    $file = $_FILES["uploadfile"];
+   
+    if ($file["error"] !== UPLOAD_ERR_OK) {
+     $output_question = "<font color='red'><i>Uploadfehler</i></font><br>";
+    }
+    
+    $name = preg_replace("/[^A-Z0-9._-]/i", "_", $file["name"]);
+    
+    $i = 0;
+    $parts = pathinfo($name);
+    while (file_exists($uploaddir . $name)) {
+     $i++;
+     $name = $parts["filename"] . "-" . $i . "." . $parts["extension"];
+    }
+    
+    $success = move_uploaded_file($file["tmp_name"], $uploaddir.$name);
+    if (!$success) {
+     $output_question = "<font color='red'><i>Datei konnte nicht gespeichert werden</i></font><br>";
+    } else {
+     $output_question = "<font color='green'><i>Datei gespeichert; am Ende der Nachricht bitte folgendes eingeben: >>$name</i></font><br>";
+     chmod($uploaddir . $name, 0777);
+    }
+   }
+
    $response = file_get_contents('https://schueler:zabelhaft@fgrunert.lima-city.de/schule/check.php');
    if ($response == 'ok') {
     $ip = shell_exec('curl ifconfig.me');
@@ -108,12 +136,15 @@
   <input type="text" id="input_name"></input><br><br>
   Frage:<br>
   <textarea id="input_question"></textarea><br><br>
+  <button onclick="send_question()" id="button_question">Absenden</button><br><br>
   
   Bilddatei (optional):<br>
-  <input type="file" id="file"></input><br><br>
+  <form action="index.php" method="post" enctype="multipart/form-data"> 
+   <input type="file" name="uploadfile">
+   <input type="submit" value="Absenden">
+  </form>
   
-  <button onclick="send_question()" id="button_question">Absenden</button><br>
-  <font color="red"><span id="output_question"></span></font><br>
+  <font color="red"><span id="output_question"><?php if (isset($output_question)) {echo $output_question;} ?></span></font><br>
   
   <u>Lehrerdateien</u><br>
   <?php

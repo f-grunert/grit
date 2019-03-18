@@ -19,6 +19,7 @@ StopBlinkButtonService = True
 NumberServices = 0
 Questions = []
 Services = []
+Files = []
 Preview = True
 pins_out = [16,15,33]
 
@@ -82,14 +83,18 @@ def BlinkButtonService():
 
 # Frage anzeigen
 def ShowQuestion():
- global Questions, StopBlinkButtonQuestion
+ global Questions, Files, StopBlinkButtonQuestion
  if len(Questions) != 0:
   question = Questions.pop(0)
+  file = Files.pop(0)
   LabelNews.config(text=question[0])
   LabelNews.update()
   subprocess.call('aplay ~/Documents/Scripts/notify.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "' + question[1] + '"; aplay /tmp/audio.wav; rm /tmp/audio.wav', shell=True)
   if len(Questions) == 0:
    StopBlinkButtonQuestion = True
+  if file != "":
+   subprocess.call('gpicview /home/pi/Documents/Scripts/'+file, shell=True)
+   os.remove('/home/pi/Documents/Scripts/'+file)
   ButtonQuestion.config(text='Fragen (' + str(len(Questions)) + ')')
   ButtonQuestion.update()
 
@@ -109,7 +114,7 @@ def ShowService():
 
 # Regelmäßiges Überprüfen auf Änderungen im LOG, als thread parallel aufgerufen
 def CheckLog():
- global Questions, Services
+ global Questions, Services, Files
  FileLog = open('/var/www/html/interaction/interaction.log', 'r')
  ContentFileLog = FileLog.readlines()[-1]
  FileLog.close()
@@ -127,10 +132,11 @@ def CheckLog():
      name = name.split(']')[0]
      operator = NewContentFileLog.split(':')[1]
      content = NewContentFileLog.split("\t")[1]
-     if content.find("Bild") != -1:
-      img2 = tk.PhotoImage(file="/home/pi/Documents/Scripts/capture2.gif")
-      LabelImage.config(image=img2)
-      LabelImage.image = img2
+     if content.find(">>") != -1:
+      content, file = content.split(">>")
+      Files.append(file)
+     else:
+      Files.append("")
      if operator == 'question':
       operator = ' hat folgende Frage '
       Questions.append([name + ' > ' + content, name + operator + content])
@@ -157,20 +163,23 @@ def DisableButtons():
  ButtonQuestion.update()
  ButtonService.config(state='disabled')
  ButtonService.update()
+ ButtonSettings.config(state='disabled')
+ ButtonSettings.update()
 
 def EnableButtons():
  ButtonStream.config(state='normal')
  ButtonQuit.config(state='normal')
  ButtonQuestion.config(state='normal')
  ButtonService.config(state='normal')
+ ButtonSettings.config(state='normal')
 
 def TellWeb(status):
  if Webconnection == True:
   if status == True:
    LocalIP = subprocess.check_output('curl ifconfig.me', shell=True)
-   requests.get('https://schueler:zabelhaft@fgrunert.tk/schule/index.php?sendip=' + LocalIP)
+   requests.get('https://schueler:zabelhaft@fgrunert.lima-city.de/schule/index.php?sendip=' + LocalIP)
   else:
-   requests.get('https://schueler:zabelhaft@fgrunert.tk/schule/index.php?sendip=null')
+   requests.get('https://schueler:zabelhaft@fgrunert.lima-city.de/schule/index.php?sendip=null')
 
 def StartStream():
  global Preview
@@ -250,11 +259,13 @@ LabelImage.place(x=12, y=12)
 ButtonStream = tk.Button(root, font=("TkDefaultFont", 35), width=16, text='Stream starten', command=StartStream)
 ButtonStream.place(x=502, y=12)
 ButtonQuit = tk.Button(root, font=("TkDefaultFont", 35), width=16, text='Schließen', command=QuitSystem)
-ButtonQuit.place(x=502, y=92)
+ButtonQuit.place(x=502, y=87)
 ButtonQuestion = tk.Button(root, font=("TkDefaultFont", 35), width=16, text='Fragen (' + str(len(Questions)) + ')', command=ShowQuestion)
-ButtonQuestion.place(x=502, y=172)
+ButtonQuestion.place(x=502, y=162)
 ButtonService = tk.Button(root, font=("TkDefaultFont", 35), width=16, text='Serviceanfragen (' + str(len(Services)) + ')', command=ShowService)
-ButtonService.place(x=502, y=262)
+ButtonService.place(x=502, y=237)
+ButtonSettings = tk.Button(root, font=("TkDefaultFont", 35), width=16, text='Einstellungen ⚙')
+ButtonSettings.place(x=502, y=312)
 
 StandardColor = ButtonStream.cget('bg')
 StandardColorActive = ButtonStream.cget('activebackground')
