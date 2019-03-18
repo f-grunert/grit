@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=GrunBot Program
+Exec=sh -c "sleep 20 ; python /home/pi/Documents/Scripts/grunbot.py"
+Type=Application
+NoDisplay=false

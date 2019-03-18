@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Shutdown Service
+Exec=python /home/pi/Documents/Scripts/shutdown.py &
+Type=Application
+NoDisplay=true

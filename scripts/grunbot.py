@@ -29,16 +29,14 @@ for pin in pins_out:
 
 GPIO.output(15, GPIO.HIGH)
 
-tempfiles = ['stream.tmp', 'lock.tmp', 'interaction.log']
+tempfiles = ['stream.tmp', 'lock.tmp', "usblink"]
 
 for tempfile in tempfiles:
  if os.path.exists('/var/www/html/interaction/' + tempfile) == True:
   os.unlink('/var/www/html/interaction/' + tempfile)
 
-os.mknod('/var/www/html/interaction/interaction.log')
-
 # Check Internet-Verbindung
-RequestCheck = requests.get('http://schueler:zabelhaft@fgrunert.tk/schule/check.php')
+RequestCheck = requests.get('http://schueler:zabelhaft@fgrunert.lima-city.de/schule/check.php')
 if RequestCheck.text == 'ok':
  Webconnection = True
 else:
@@ -129,6 +127,10 @@ def CheckLog():
      name = name.split(']')[0]
      operator = NewContentFileLog.split(':')[1]
      content = NewContentFileLog.split("\t")[1]
+     if content.find("Bild") != -1:
+      img2 = tk.PhotoImage(file="/home/pi/Documents/Scripts/capture2.gif")
+      LabelImage.config(image=img2)
+      LabelImage.image = img2
      if operator == 'question':
       operator = ' hat folgende Frage '
       Questions.append([name + ' > ' + content, name + operator + content])
@@ -171,7 +173,10 @@ def TellWeb(status):
    requests.get('https://schueler:zabelhaft@fgrunert.tk/schule/index.php?sendip=null')
 
 def StartStream():
+ global Preview
  DisableButtons()
+ Preview = False
+ time.sleep(1.5)
  TellWeb(True)
  os.mknod('/var/www/html/interaction/stream.tmp')
  threading.Thread(target=CheckLog).start()
@@ -185,7 +190,7 @@ def StartStream():
  GPIO.output(33, GPIO.HIGH)
 
 def StopStream():
- global StopBlinkButtonQuestion, StopBlinkButtonService
+ global StopBlinkButtonQuestion, StopBlinkButtonService, Preview
  DisableButtons()
  TellWeb(False)
  StopBlinkButtonQuestion = True
@@ -198,6 +203,8 @@ def StopStream():
  ButtonStream.config(command=StartStream) 
  LabelStatus.config(text="Stream inaktiv")
  LabelStatus.config(fg="red")
+ Preview = True
+ threading.Thread(target=ImageUpdate).start()
  subprocess.call('aplay ~/Documents/Scripts/notify.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "Stream beendet"; aplay /tmp/audio.wav; rm /tmp/audio.wav', shell=True)
  EnableButtons()
  GPIO.output(33, GPIO.LOW)
@@ -205,18 +212,20 @@ def StopStream():
 def QuitSystem():
  global Preview
  DisableButtons()
- Preview = False
  subprocess.call('aplay ~/Documents/Scripts/notify.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "System wird beendet"; aplay /tmp/audio.wav; rm /tmp/audio.wav', shell=True)
  GPIO.output(16, GPIO.LOW)
  GPIO.output(33, GPIO.LOW)
- print "GPIOs done"
  if os.path.exists('/var/www/html/interaction/stream.tmp'):
   StopStream()
-  root.quit()
+  Preview = False
+  time.sleep(1.5)
+  proc_python = os.getpid()
+  subprocess.Popen('sudo kill ' + str(proc_python), shell=True)
  else:
-  root.quit()
-
-#def SetBalance():
+  Preview = False
+  time.sleep(1.5)
+  proc_python = os.getpid()
+  subprocess.Popen('sudo kill ' + str(proc_python), shell=True)
 
 # Labels
 if Webconnection == True:

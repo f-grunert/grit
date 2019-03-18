@@ -3,6 +3,7 @@
   <style>
    body { font-family: sans-serif; }
    input { cursor: pointer; }
+   ul {margin: 0; padding: 0; list-style-position: inside; list-style-type: square;}
   </style>
   <script type="text/javascript">
    setInterval(check_stream, 2000);
@@ -86,7 +87,9 @@
    }
   </script>
   <?php
-   $response = file_get_contents('https://schueler:zabelhaft@fgrunert.tk/schule/check.php');
+#error_reporting(E_ALL | E_STRICT);
+#ini_set('display_errors', 1);
+   $response = file_get_contents('https://schueler:zabelhaft@fgrunert.lima-city.de/schule/check.php');
    if ($response == 'ok') {
     $ip = shell_exec('curl ifconfig.me');
    } else {
@@ -106,12 +109,51 @@
   Frage:<br>
   <textarea id="input_question"></textarea><br><br>
   
-  <!-- Bild noch nicht im Backend implementiert -->
   Bilddatei (optional):<br>
-  <input type="file" id="xxx0"></input><br><br>
+  <input type="file" id="file"></input><br><br>
   
   <button onclick="send_question()" id="button_question">Absenden</button><br>
-  <font color="red"><span id="output_question"></span></font><br><br>
+  <font color="red"><span id="output_question"></span></font><br>
+  
+  <u>Lehrerdateien</u><br>
+  <?php
+if (is_dir("interaction/usblink")) {
+ $usbcontent = scandir("interaction/usblink");
+ if (count($usbcontent) > 2) {
+  echo "<ul>";
+  foreach ($usbcontent as $usbfile) {
+   if (is_file("interaction/usblink/$usbfile")) {
+    echo "<li><a href='interaction/usblink/$usbfile'>$usbfile</a></li>";
+   }
+  }
+  echo "</ul>";
+ } else {
+  echo "<i>keine Daten vorhanden</i><br>";
+ }
+} else {
+ $usbdevices = scandir("/media/pi");
+ foreach ($usbdevices as $device) {
+  if (is_dir("/media/pi/$device") and $device != "." and $device != "..") {
+   $usbpath = "/media/pi/$device";
+   break;
+  }
+ }
+ if (isset($usbpath) and is_dir("$usbpath/GRIT/") and count(scandir("$usbpath/GRIT")) > 2) {
+  unlink("interaction/usblink");
+  symlink("$usbpath/GRIT/", "interaction/usblink");
+  echo "<ul>";
+  foreach (scandir("interaction/usblink") as $usbfile) {
+   if (is_file("interaction/usblink/$usbfile")) {
+    echo "<li><a href='interaction/usblink/$usbfile'>$usbfile</a></li>";
+   }
+  }
+  echo "</ul>";
+ } else {
+  unlink("interaction/usblink");
+  echo "<i>kein USB-Ger&auml;t des Lehrers angeschlossen</i><br>";
+ }
+}
+  ?><br>
   
   <u>Serviceanfrage</u><br>
   Name:<br>
@@ -121,7 +163,7 @@
    <option value="Aktivierung des Lichts">Aktivierung des Lichts</option>
    <option value="Deaktivierung des Lichts">Deaktivierung des Lichts</option>
    <option value="Verschiebung der Tafel">Verschiebung der Tafel</option>
-   <option value="Positionsveränderung der Lehrkraft">Positionsveränderung der Lehrkraft</option>
+   <option value="Positionsveränderung der Lehrkraft">Positionsver&auml;nderung der Lehrkraft</option>
  </select><br><br>
  <button onclick="send_service()" id="button_service">Absenden</button><br>
  <font color="red"><span id="output_service"></span></font><br>
