@@ -24,4 +24,4 @@ if Webconnection == True:
  text = 'Das System wird gestartet. Die lokale IP ist: ' + LocalIP + '; die öffentliche IP ist: ' + PublicIP
 else:
  text = 'Das System wird gestartet. Die lokale IP ist: ' + LocalIP + '; das Gerät ist nicht mit dem Internet verbunden und wird nicht öffentlich auffindbar sein.'
-subprocess.call('aplay /home/pi/Documents/Scripts/notify.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "' + text + '" && aplay /tmp/audio.wav && rm /tmp/audio.wav', shell=True)
+subprocess.call('aplay /home/pi/Documents/Scripts/message_start.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "' + text + '" && aplay /tmp/audio.wav && rm /tmp/audio.wav', shell=True)

@@ -19,7 +19,6 @@ StopBlinkButtonService = True
 NumberServices = 0
 Questions = []
 Services = []
-Files = []
 Preview = True
 pins_out = [16,15,33]
 
@@ -55,9 +54,57 @@ def ImageUpdate():
 
 threading.Thread(target=ImageUpdate).start()
 
+# Deaktivierung Einstellungsmenü
+def AbortSettings():
+ global settings
+ settings.destroy()
+
+# Speichern Einstellungen
+def SaveSettings():
+ print "null"
+
+# Aktivierung Einstellungsmenü
+def ShowSettings():
+ global settings
+ settings = tk.Tk()
+ settings.attributes("-fullscreen", True)
+ 
+ # Label
+ LabelSettings = tk.Label(settings, font=("TkDefaultFont", 45, "bold"), text="Einstellungen")
+ LabelSettings.place(x=12, y=12)
+ LabelSettingsRecording = tk.Label(settings, font=("TkDefaultFont", 25), text="Aufzeichnung speichern?")
+ LabelSettingsRecording.place(x=12, y=100)
+ LabelSettingsRecordingDefault = tk.Label(settings, font=("TkDefaultFont", 15, 'italic'), text="default: nein")
+ LabelSettingsRecordingDefault.place(x=12, y=145)
+ LabelSettingsVideobit = tk.Label(settings, font=("TkDefaultFont", 25), text="Videobitrate in MBit/s")
+ LabelSettingsVideobit.place(x=12, y=200)
+ LabelSettingsVideobitDefault = tk.Label(settings, font=("TkDefaultFont", 15, 'italic'), text="default: 1,8 MBit/s")
+ LabelSettingsVideobitDefault.place(x=12, y=245)
+ LabelSettingsAudiobit = tk.Label(settings, font=("TkDefaultFont", 25), text="Audiobitrate in MBit/s")
+ LabelSettingsAudiobit.place(x=12, y=300)
+ LabelSettingsAudiobitDefault = tk.Label(settings, font=("TkDefaultFont", 15, 'italic'), text="default: 0,4 MBit/s")
+ LabelSettingsAudiobitDefault.place(x=12, y=345)
+ 
+ # Inputs
+ InputSettingsRecording = tk.Checkbutton(settings,  font=("TkDefaultFont", 25), bd=0)
+ InputSettingsRecording.place(x=475, y=100)
+ InputSettingsVideobit = tk.Spinbox(settings,  font=("TkDefaultFont", 25), width=5, bd=0, from_=0.1, to=10, increment=0.01)
+ InputSettingsVideobit.place(x=475, y=200)
+ InputSettingsAudiobit = tk.Spinbox(settings,  font=("TkDefaultFont", 25), width=5, bd=0, from_=0.1, to=5, increment=0.01)
+ InputSettingsAudiobit.place(x=475, y=300)
+ 
+ # Buttons
+ ButtonSettingsQuit = tk.Button(settings, font=("TkDefaultFont", 35), width=15, bg='red', activebackground='red', text='Abbrechen', command=AbortSettings)
+ ButtonSettingsQuit.place(x=530, y=516)
+ ButtonSettingsSave = tk.Button(settings, font=("TkDefaultFont", 35), width=15, bg='green', activebackground='green', text='Speichern', command=SaveSettings)
+ ButtonSettingsSave.place(x=12, y=516)
+ 
+ settings.mainloop
+
 # Blinken des dazugehörigen Buttons bei neuen Fragen
 def BlinkButtonQuestion():
  global StopBlinkButtonQuestion
+ subprocess.Popen('aplay ~/Documents/Scripts/message_notifier.wav', shell=True)
  if StopBlinkButtonQuestion != False:
   StopBlinkButtonQuestion = False
   while StopBlinkButtonQuestion == False:
@@ -71,6 +118,7 @@ def BlinkButtonQuestion():
 # Blinken des dazugehörigen Buttons bei neuen Serviceanfragen
 def BlinkButtonService():
  global StopBlinkButtonService
+ subprocess.Popen('aplay ~/Documents/Scripts/message_notifier.wav', shell=True)
  if StopBlinkButtonService != False:
   StopBlinkButtonService = False
   while StopBlinkButtonService == False:
@@ -83,20 +131,20 @@ def BlinkButtonService():
 
 # Frage anzeigen
 def ShowQuestion():
- global Questions, Files, StopBlinkButtonQuestion
+ global Questions, StopBlinkButtonQuestion
  if len(Questions) != 0:
   question = Questions.pop(0)
-  file = Files.pop(0)
   LabelNews.config(text=question[0])
   LabelNews.update()
-  subprocess.call('aplay ~/Documents/Scripts/notify.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "' + question[1] + '"; aplay /tmp/audio.wav; rm /tmp/audio.wav', shell=True)
+  ButtonQuestion.config(text='Beiträge (' + str(len(Questions)) + ')')
+  ButtonQuestion.update()
+  subprocess.call('aplay ~/Documents/Scripts/message_start.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "' + question[1] + '"; aplay /tmp/audio.wav; rm /tmp/audio.wav', shell=True)
   if len(Questions) == 0:
    StopBlinkButtonQuestion = True
-  if file != "":
-   subprocess.call('gpicview /home/pi/Documents/Scripts/'+file, shell=True)
-   os.remove('/home/pi/Documents/Scripts/'+file)
-  ButtonQuestion.config(text='Fragen (' + str(len(Questions)) + ')')
-  ButtonQuestion.update()
+  if question[2] != "":
+   subprocess.call('pcmanfm ' + question[2], shell=True)
+   time.sleep(5)
+   os.remove(question[2])
 
 # Serviceanfrage anzeigen
 def ShowService():
@@ -105,16 +153,16 @@ def ShowService():
   service = Services.pop(0)
   LabelNews.config(text=service[0])
   LabelNews.update()
-  subprocess.call('aplay ~/Documents/Scripts/notify.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "' + service[1] + '"; aplay /tmp/audio.wav; rm /tmp/audio.wav', shell=True)
-  if len(Services) == 0:
-   StopBlinkButtonService = True
   ButtonService.config(text='Serviceanfragen (' + str(len(Services)) + ')')
   ButtonService.update()
+  subprocess.call('aplay ~/Documents/Scripts/message_start.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "' + service[1] + '"; aplay /tmp/audio.wav; rm /tmp/audio.wav', shell=True)
+  if len(Services) == 0:
+   StopBlinkButtonService = True
 
 
 # Regelmäßiges Überprüfen auf Änderungen im LOG, als thread parallel aufgerufen
 def CheckLog():
- global Questions, Services, Files
+ global Questions, Services
  FileLog = open('/var/www/html/interaction/interaction.log', 'r')
  ContentFileLog = FileLog.readlines()[-1]
  FileLog.close()
@@ -134,13 +182,13 @@ def CheckLog():
      content = NewContentFileLog.split("\t")[1]
      if content.find(">>") != -1:
       content, file = content.split(">>")
-      Files.append(file)
+      filepath = file
      else:
-      Files.append("")
+      filepath = ""
      if operator == 'question':
-      operator = ' hat folgende Frage '
-      Questions.append([name + ' > ' + content, name + operator + content])
-      ButtonQuestion.config(text='Fragen (' + str(len(Questions)) + ')', command=ShowQuestion)
+      operator = ' hat folgenden Beitrag '
+      Questions.append([name + ' > ' + content, name + operator + content, filepath])
+      ButtonQuestion.config(text='Beiträge (' + str(len(Questions)) + ')', command=ShowQuestion)
       threading.Thread(target=BlinkButtonQuestion).start()
      elif operator == 'service':
       operator = ' bittet um eine '
@@ -194,7 +242,7 @@ def StartStream():
  ButtonStream.config(command=StopStream)
  LabelStatus.config(text="Stream aktiv")
  LabelStatus.config(fg="green")
- subprocess.call('aplay ~/Documents/Scripts/notify.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "Stream gestartet"; aplay /tmp/audio.wav; rm /tmp/audio.wav', shell=True)
+ subprocess.call('aplay ~/Documents/Scripts/message_start.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "Stream gestartet"; aplay /tmp/audio.wav; rm /tmp/audio.wav', shell=True)
  EnableButtons()
  GPIO.output(33, GPIO.HIGH)
 
@@ -214,14 +262,14 @@ def StopStream():
  LabelStatus.config(fg="red")
  Preview = True
  threading.Thread(target=ImageUpdate).start()
- subprocess.call('aplay ~/Documents/Scripts/notify.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "Stream beendet"; aplay /tmp/audio.wav; rm /tmp/audio.wav', shell=True)
+ subprocess.call('aplay ~/Documents/Scripts/message_start.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "Stream beendet"; aplay /tmp/audio.wav; rm /tmp/audio.wav', shell=True)
  EnableButtons()
  GPIO.output(33, GPIO.LOW)
 
 def QuitSystem():
  global Preview
  DisableButtons()
- subprocess.call('aplay ~/Documents/Scripts/notify.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "System wird beendet"; aplay /tmp/audio.wav; rm /tmp/audio.wav', shell=True)
+ subprocess.call('aplay ~/Documents/Scripts/message_start.wav && pico2wave --lang de-DE --wave /tmp/audio.wav "System wird beendet"; aplay /tmp/audio.wav; rm /tmp/audio.wav', shell=True)
  GPIO.output(16, GPIO.LOW)
  GPIO.output(33, GPIO.LOW)
  if os.path.exists('/var/www/html/interaction/stream.tmp'):
@@ -260,11 +308,11 @@ ButtonStream = tk.Button(root, font=("TkDefaultFont", 35), width=16, text='Strea
 ButtonStream.place(x=502, y=12)
 ButtonQuit = tk.Button(root, font=("TkDefaultFont", 35), width=16, text='Schließen', command=QuitSystem)
 ButtonQuit.place(x=502, y=87)
-ButtonQuestion = tk.Button(root, font=("TkDefaultFont", 35), width=16, text='Fragen (' + str(len(Questions)) + ')', command=ShowQuestion)
+ButtonQuestion = tk.Button(root, font=("TkDefaultFont", 35), width=16, text='Beiträge (' + str(len(Questions)) + ')', command=ShowQuestion)
 ButtonQuestion.place(x=502, y=162)
 ButtonService = tk.Button(root, font=("TkDefaultFont", 35), width=16, text='Serviceanfragen (' + str(len(Services)) + ')', command=ShowService)
 ButtonService.place(x=502, y=237)
-ButtonSettings = tk.Button(root, font=("TkDefaultFont", 35), width=16, text='Einstellungen ⚙')
+ButtonSettings = tk.Button(root, font=("TkDefaultFont", 35), width=16, text='Einstellungen ⚙', command=ShowSettings)
 ButtonSettings.place(x=502, y=312)
 
 StandardColor = ButtonStream.cget('bg')

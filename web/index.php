@@ -34,6 +34,18 @@
 	 return;
 	}
 	
+    try {
+     var userfiles = document.getElementsByName("fileselection");
+     userfiles.forEach(function(userfile) {
+      if (userfile.checked) {
+       question = question + '>>' + userfile.value;
+       userfile.checked = false;
+      }
+     });
+    } catch {
+     console.log("null");
+    }
+    
 	// Initialisierung HTTP-Anfrage
 	if (window.XMLHttpRequest) {
      http_request = new XMLHttpRequest();
@@ -136,6 +148,24 @@
   <input type="text" id="input_name"></input><br><br>
   Frage:<br>
   <textarea id="input_question"></textarea><br><br>
+    <?php
+$systemfiles = ["capture.gif", "gpio.py", "grunbot.py", "ip.py", "message_notifier.wav", "message_start.wav", "shutdown.py", "sync.ffs_db"];
+$userfiles = [];
+foreach (scandir("/home/pi/Documents/Scripts/") as $dat) {
+ if (is_dir("/home/pi/Documents/Scripts/".$dat) != true and in_array($dat, $systemfiles) == false and $dat[0] != '.') {
+  array_push($userfiles, "/home/pi/Documents/Scripts/".$dat);
+ }
+}
+if ($userfiles != []) {
+ echo "Dateireferenz (optional):<br>";
+ $i = 0;
+ foreach ($userfiles as $userfile) {
+  echo "<input type='radio' name='fileselection' id='fileselection$i' value='".$userfile."'><img src='".$userfile."'></img> ".end(explode("/", $userfile))."</input><br>";
+  $i++;
+ }
+ echo "<br>";
+}
+  ?>
   <button onclick="send_question()" id="button_question">Absenden</button><br><br>
   
   Bilddatei (optional):<br>
